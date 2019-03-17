@@ -475,4 +475,21 @@ use the stdc++ lib in the
 -fsingle-precision-constant  
 See the common (CPPFLAGS) flags for description.
 
+\pagebreak
+
+First Upload 
+-------------
+Notes from pjrc.com on using your teensy for the first time.
+
+https://www.pjrc.com/teensy/troubleshoot.html
+
+Teensy uses HID protocol for uploading, not serial. Brand new Teensy boards are
+shipped with the LED blink example compiled to appear as RawHID. You must
+program Teensy at least once from Arduino. The COM port (Windows) or Serial
+Device (Mac, Linux) appears only after Teensy begins running your program.
+Regular Arduino boards are always serial. Teensy uses HID and supports many
+protocols. To use serial, make sure the Tools > USB Type menu is set to
+"Serial", and understand Teensy only becomes a serial device when it runs your
+program built with this setting. 
+
 

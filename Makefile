@@ -5,33 +5,39 @@
 # TARGET = $(nodir $CURDIR)
 TARGET = main
 
+COREMAKE = Makefile.core
+
 # PATH CONFIGURATION =========================================
 # Path to arduino installation, we will use the toolchain from this install
 ARDUINOPATH = /home/john/opt/arduino-1.8.8
 
-# Path to the project directory, pick one of these approaches
-# PROJECTPATH = /home/john/src/ohio
-# PROJECTPATH = $CURDIR
+# Path to the project directory
 PROJECTPATH = $(abspath $(CURDIR))
 
 # this is where we have stored copy of the core teensy3 code
 COREPATH = $(PROJECTPATH)/teensy3
-# INC = $(COREPATH)
-INC = $(PROJECTPATH)/include
-LIB = $(PROJECTPATH)/lib
+BUILDPATH = $(abspath $(COREPATH)/build)
+LIBPATH = $(PROJECTPATH)/lib
+COREINC = $(PROJECTPATH)/include
+CORELIB = $(PROJECTPATH)/lib
 
 # path location for toolchain, Teensy Loader, teensy_post_compile and teensy_reboot
 TOOLSPATH = $(abspath $(ARDUINOPATH)/hardware/tools)
 COMPILERPATH = $(abspath $(ARDUINOPATH)/hardware/tools/arm/bin)
+
+export ARDUINOPATH PROJECTPATH COREPATH BUILDPATH CORELIB COREINC 
 # ===================================================================
 
 # TOOLS =============================================================
 # toolchain programs
 CC = $(abspath $(COMPILERPATH))/arm-none-eabi-gcc
 CXX = $(abspath $(COMPILERPATH))/arm-none-eabi-g++
+AR = $(abspath $(COMPILERPATH))/arm-none-eabi-gcc-ar
 OBJCOPY = $(abspath $(COMPILERPATH))/arm-none-eabi-objcopy
 OBJDUMP= $(abspath $(COMPILERPATH))/arm-none-eabi-objdump
 SIZE = $(abspath $(COMPILERPATH))/arm-none-eabi-size
+
+export CC CXX AR OBJCOPY OBJDUMP SIZE
 # ===================================================================
 
 
@@ -69,11 +75,11 @@ ASFLAGS = -x assembler-with-cpp
 
 # linker options
 TS = $(shell date +%s)
-LDFLAGS = -O2 -Wl,--gc-sections,--relax,--defsym=__rtc_localtime=$(TS) -T$(INC)/$(MCU_LD) -lstdc++  -mthumb -mcpu=$(CPUARCH) -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fsingle-precision-constant 
+LDFLAGS = -O2 -Wl,--gc-sections,--relax,--defsym=__rtc_localtime=$(TS) -T$(COREINC)/$(MCU_LD) -lstdc++  -mthumb -mcpu=$(CPUARCH) -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fsingle-precision-constant 
 
-# libraries to link... my version of the library
-# since the teensy is compiled to indivdual object we do not have a arduino lib
-LIBS = $(LIB)/core.a -larm_cortexM4l_math -lm
+LIBS = -larm_cortexM4l_math -lm
+
+export CPPFLAGS CXXFLAGS CFLAGS ASFLAGS LDFLAGS LIBS MCU_LD
 # ===================================================================
 
 
@@ -83,24 +89,29 @@ LIBS = $(LIB)/core.a -larm_cortexM4l_math -lm
 # CPP_FILES := $(wildcard *.cpp)
 # OBJS := $(C_FILES:.c=.o) $(CPP_FILES:.cpp=.o)
 
-C_FILES := $(wildcard $(COREPATH)/*.c)
-CPP_FILES := $(wildcard $(COREPATH)/*.cpp)
-OBJS := $(C_FILES:.c=.o) $(CPP_FILES:.cpp=.o)
+# C_FILES := $(wildcard $(COREPATH)/*.c)
+# CPP_FILES := $(wildcard $(COREPATH)/*.cpp)
+# OBJS := $(C_FILES:.c=.o) $(CPP_FILES:.cpp=.o)
 
 # .SECONDARY do not delete intermediate files
-# This allow us to look at a dump of the elf file
+# This allow us to look at a disassembly (disasm) of the elf file
 .SECONDARY:
+
 # this invocation of make will be run serially
 # .NOTPARALLEL:
 
+# lets not get target confused with file names
+.PHONY: all core cleancore keyboard upload disasm
+
 all: $(TARGET).hex
 
-# coreserial:
-# 	cd $(COREPATH) ; make
-# 
-# corekeyboard:
-# 	cd $(COREPATH) ; make USB=keyboard
-# 
+core:
+	cd $(COREPATH) &&  make -f Makefile.core clean
+	cd $(COREPATH) &&  make -f Makefile.core
+
+cleancore:
+	cd $(COREPATH) &&  make -f Makefile.core clean
+
 keyboard:
 	make USB=keyboard
 
@@ -109,19 +120,19 @@ keyboard:
 	$(OBJCOPY) -O ihex -R .eeprom $< $@
 
 %.o: %.cpp
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(INC) -o "$@" "$<"
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(COREINC) -o "$@" "$<"
 
 %.o: %.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) -I$(INC) -o "$@" "$<"
+	$(CC) $(CPPFLAGS) $(CFLAGS) -I$(COREINC) -o "$@" "$<"
 
 %.elf: %.o
-	$(CC) $(LDFLAGS) -o "$@" "$<" -L$(LIB) $(LIBS)
+	$(CC) $(LDFLAGS) -o "$@" "$<" -L$(CORELIB) $(LIBS)
 
 upload: $(TARGET).hex
 	$(abspath $(TOOLSPATH))/teensy_post_compile -file=$(TARGET) -path=$(shell pwd) -tools=$(abspath $(TOOLSPATH))
 	-$(abspath $(TOOLSPATH))/teensy_reboot
 
-dump: 
+disasm: 
 	$(OBJDUMP) -d $(TARGET).elf
 
 # compiler generated dependency info
