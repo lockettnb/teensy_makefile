@@ -19,15 +19,19 @@ setup();
 
 // the loop function runs over and over again forever
 while (1) {  
-  for (i=0; i<50; i++) {
+  for (i=0; i<20; i++) {
     digitalWrite(LED_BUILTIN, HIGH);   
-    delay(50); 
+    delay(75); 
     digitalWrite(LED_BUILTIN, LOW);   
-   delay(155);                      
+   delay(55);                      
   }
   
   digitalWrite(LED_BUILTIN, HIGH);   
-  delay(500);                      
+  delay(1500);                      
+  digitalWrite(LED_BUILTIN, LOW);    
+  delay(2000); digitalWrite(LED_BUILTIN, HIGH);   
+  digitalWrite(LED_BUILTIN, HIGH);   
+  delay(1500);                      
   digitalWrite(LED_BUILTIN, LOW);    
   delay(2000); digitalWrite(LED_BUILTIN, HIGH);   
   

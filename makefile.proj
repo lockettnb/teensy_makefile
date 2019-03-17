@@ -15,16 +15,10 @@ ARDUINOPATH = /home/john/opt/arduino-1.8.8
 PROJECTPATH = $(abspath $(CURDIR))
 
 # this is where we have stored copy of the core teensy3 code
-TEENSYCORE = $(PROJECTPATH)/teensy3_1.8.8
-INC = $(TEENSYCORE)
-
-# from previous versions ... now obsolete
-# TEENSYPATH = /home/john/src/teensy
-# TOOLSPATH = $(TEENSYPATH)/tools
-# COMPILERPATH = $(TOOLSPATH)/arm/bin
-# INC = $(TEENSYPATH)/include
-# LIB = $(TEENSYPATH)/lib
-# CORELIB = $(LIB)/core.a
+COREPATH = $(PROJECTPATH)/teensy3
+# INC = $(COREPATH)
+INC = $(PROJECTPATH)/include
+LIB = $(PROJECTPATH)/lib
 
 # path location for toolchain, Teensy Loader, teensy_post_compile and teensy_reboot
 TOOLSPATH = $(abspath $(ARDUINOPATH)/hardware/tools)
@@ -32,7 +26,7 @@ COMPILERPATH = $(abspath $(ARDUINOPATH)/hardware/tools/arm/bin)
 # ===================================================================
 
 # TOOLS =============================================================
-# names for the compiler programs
+# toolchain programs
 CC = $(abspath $(COMPILERPATH))/arm-none-eabi-gcc
 CXX = $(abspath $(COMPILERPATH))/arm-none-eabi-g++
 OBJCOPY = $(abspath $(COMPILERPATH))/arm-none-eabi-objcopy
@@ -60,7 +54,8 @@ CPUARCH = cortex-m4
 OPTIONS = -DF_CPU=120000000 -D$(USBFLAG) -DLAYOUT_US_ENGLISH 
 # options needed by many Arduino libraries to configure for Teensy 3.x
 OPTIONS += -D__$(MCU)__  -DTEENSYDUINO=145 -DARDUINO=10808
-# not sure where I got this one
+# This can be used in cpp/c programs to conditionally compile for ino
+# or regular cpp/c programs
 OPTIONs += -DUSING_MAKEFILE 
 
 # common flags & options
@@ -78,7 +73,7 @@ LDFLAGS = -O2 -Wl,--gc-sections,--relax,--defsym=__rtc_localtime=$(TS) -T$(INC)/
 
 # libraries to link... my version of the library
 # since the teensy is compiled to indivdual object we do not have a arduino lib
-LIBS = -larm_cortexM4l_math -lm
+LIBS = $(LIB)/core.a -larm_cortexM4l_math -lm
 # ===================================================================
 
 
@@ -87,6 +82,10 @@ LIBS = -larm_cortexM4l_math -lm
 # C_FILES := $(wildcard *.c)
 # CPP_FILES := $(wildcard *.cpp)
 # OBJS := $(C_FILES:.c=.o) $(CPP_FILES:.cpp=.o)
+
+C_FILES := $(wildcard $(COREPATH)/*.c)
+CPP_FILES := $(wildcard $(COREPATH)/*.cpp)
+OBJS := $(C_FILES:.c=.o) $(CPP_FILES:.cpp=.o)
 
 # .SECONDARY do not delete intermediate files
 # This allow us to look at a dump of the elf file
@@ -97,10 +96,10 @@ LIBS = -larm_cortexM4l_math -lm
 all: $(TARGET).hex
 
 # coreserial:
-# 	cd $(TEENSYCORE) ; make
+# 	cd $(COREPATH) ; make
 # 
 # corekeyboard:
-# 	cd $(TEENSYCORE) ; make USB=keyboard
+# 	cd $(COREPATH) ; make USB=keyboard
 # 
 keyboard:
 	make USB=keyboard
@@ -110,11 +109,9 @@ keyboard:
 	$(OBJCOPY) -O ihex -R .eeprom $< $@
 
 %.o: %.cpp
-	cd $(TEENSYCORE); make clean; make
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(INC) -o "$@" "$<"
 
 %.o: %.c
-	cd $(TEENSYCORE); make clean; make
 	$(CC) $(CPPFLAGS) $(CFLAGS) -I$(INC) -o "$@" "$<"
 
 %.elf: %.o
