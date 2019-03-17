@@ -21,10 +21,10 @@ BONUS: As part of this adventure through the twisty little passages I
 collected documentation on all of the GCC compiler/linker options. See
 the doc/teensy_makefile.pdf for details.
 
-BONUS BONUS: This is also a documentation makefile. This make is used to convert 
+BONUS BONUS: There is also a documentation makefile. This make is used to convert 
 markdown documentation into HTML or PDF.
 
-PS: The makefile is specific to the versions of the Arduino and 
-Teensyduino software you are using.  In this case they are for
+NOTE: The makefiles are specific to the versions of the Arduino and 
+Teensyduino software.  In this case they are for
 Arduino 1.8.8 and Teensyduino 1.45.  They can be easily (easy is a relative word)
 changed for other versions.
