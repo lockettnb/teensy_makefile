@@ -1,14 +1,10 @@
 //
-// 2018/03/08 arduinon 1.8.5/teensy 1.4.1 example 
+// 2019/03 arduinon 1.8.8/teensy 1.4.5 example 
 //
 
 #include <stdio.h>
 #include <string.h>
 #include "Arduino.h"
-// #include "HardwareSerial.h"
-// #include <avr/io.h>
-// #include <avr/interrupt.h>
-
 
 void setup() {
   // initialize digital pin LED_BUILTIN as an output.
