@@ -1,8 +1,15 @@
 #
+# Documenation Makefile :: markdown to PDF Or HTML
+#
 # 2015/04/17 created
 # 2019/01/13 updated for markdown document finder to pdf
 # 2019/03/16 updated for teensy3 makefile
 #
+# make pdf (default)
+# make html
+# make clean		-- remove pdf, html, and any intermediate files
+# make viewpdf		-- lauch pdf reader
+# make viewhtml		-- launch firefox 
 
 DOC=teensy_makefile
 DOCTYPE=markdown

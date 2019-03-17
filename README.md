@@ -17,7 +17,10 @@ teensy software. And a project makefile that will call the core
 makefile if a recompile is needed. Usually this is done if you 
 change a compile time configuration option.   
 
-BONUS: This is also a documentation makefile. This make is used to convert 
+BONUS: As part of this adventure throught the twisty little passages I 
+collected documentation on all of the compiler and linker options.
+
+BONUS BONUS: This is also a documentation makefile. This make is used to convert 
 markdown documentation into HTML or PDF.
 
 PS: The makefile is specific to the versions of the Arduino and 
