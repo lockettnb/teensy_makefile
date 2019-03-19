@@ -108,8 +108,8 @@ keyboard:
 	make USB=keyboard
 
 %.hex: %.elf
-	$(SIZE) $<
 	$(OBJCOPY) -O ihex -R .eeprom $< $@
+	$(SIZE) $<
 
 %.o: %.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(COREINC) -o "$@" "$<"
@@ -118,14 +118,14 @@ keyboard:
 	$(CC) $(CPPFLAGS) $(CFLAGS) -I$(COREINC) -o "$@" "$<"
 
 %.elf: %.o
-	$(CC) $(LDFLAGS) -o "$@" "$<" -L$(CORELIB) $(LIBS)
+	$(CC) $(LDFLAGS) -o "$@" "$<" $(CORELIB)/core.a -L$(CORELIB) $(LIBS)
 
 upload: $(TARGET).hex
 	$(POSTCOMPILE) -file=$(TARGET) -path=$(shell pwd) -tools=$(TOOLSPATH)
 	-$(REBOOT)
 
 disasm: 
-	$(OBJDUMP) -d $(TARGET).elf
+	$(OBJDUMP) -d -S -C $(TARGET).elf
 
 clean:
 	rm -f *.o *.d $(TARGET).elf $(TARGET).hex
@@ -135,6 +135,7 @@ clean:
 # $@  -- the file named on the left side of the :
 # $<  -- the first item in the dependencies list
 #
+# -$(REBOOT)
 # Hyphen prior to commands in makefiles is used to suppress errors and continue
 #
 # compiler generated dependency info
