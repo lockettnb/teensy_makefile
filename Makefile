@@ -16,10 +16,10 @@ PROJECTPATH = $(abspath $(CURDIR))
 
 # this is where we have stored copy of the core teensy3 code
 COREPATH = $(PROJECTPATH)/teensy3
-BUILDPATH = $(abspath $(COREPATH)/build)
-LIBPATH = $(PROJECTPATH)/lib
 COREINC = $(PROJECTPATH)/include
 CORELIB = $(PROJECTPATH)/lib
+BUILDPATH = $(abspath $(COREPATH)/build)
+# LIBPATH = $(PROJECTPATH)/lib
 
 # path location for toolchain, Teensy Loader, teensy_post_compile and teensy_reboot
 TOOLSPATH = $(abspath $(ARDUINOPATH)/hardware/tools)
@@ -30,12 +30,14 @@ export ARDUINOPATH PROJECTPATH COREPATH BUILDPATH CORELIB COREINC
 
 # TOOLS =============================================================
 # toolchain programs
-CC = $(abspath $(COMPILERPATH))/arm-none-eabi-gcc
-CXX = $(abspath $(COMPILERPATH))/arm-none-eabi-g++
-AR = $(abspath $(COMPILERPATH))/arm-none-eabi-gcc-ar
-OBJCOPY = $(abspath $(COMPILERPATH))/arm-none-eabi-objcopy
-OBJDUMP= $(abspath $(COMPILERPATH))/arm-none-eabi-objdump
-SIZE = $(abspath $(COMPILERPATH))/arm-none-eabi-size
+CC =      $(COMPILERPATH)/arm-none-eabi-gcc
+CXX =     $(COMPILERPATH)/arm-none-eabi-g++
+AR =      $(COMPILERPATH)/arm-none-eabi-gcc-ar
+OBJCOPY = $(COMPILERPATH)/arm-none-eabi-objcopy
+OBJDUMP=  $(COMPILERPATH)/arm-none-eabi-objdump
+SIZE =    $(COMPILERPATH)/arm-none-eabi-size
+REBOOT =  $(TOOLSPATH)/teensy_reboot
+POSTCOMPILE = $(TOOLSPATH)/teensy_post_compile
 
 export CC CXX AR OBJCOPY OBJDUMP SIZE
 # ===================================================================
@@ -64,43 +66,33 @@ OPTIONS += -D__$(MCU)__  -DTEENSYDUINO=145 -DARDUINO=10808
 # or regular cpp/c programs
 OPTIONs += -DUSING_MAKEFILE 
 
-# common flags & options
-CPPFLAGS = -c -O2 -g -Wall -ffunction-sections -fdata-sections -nostdlib -MMD -mthumb -mcpu=$(CPUARCH) -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fsingle-precision-constant $(OPTIONS)
-# C++ flags
+# CPP CXX C & AS flags plus options
+CPPFLAGS = -c -O2 -g -Wall -ffunction-sections -fdata-sections -nostdlib \
+		 -MMD -mthumb -mcpu=$(CPUARCH) -mfloat-abi=hard -mfpu=fpv4-sp-d16 \
+		 -fsingle-precision-constant $(OPTIONS)
 CXXFLAGS = -fno-exceptions -felide-constructors -std=gnu++14 -fno-rtti
-# C flags
 CFLAGS =
-# assembler flags
 ASFLAGS = -x assembler-with-cpp
 
 # linker options
 TS = $(shell date +%s)
-LDFLAGS = -O2 -Wl,--gc-sections,--relax,--defsym=__rtc_localtime=$(TS) -T$(COREINC)/$(MCU_LD) -lstdc++  -mthumb -mcpu=$(CPUARCH) -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fsingle-precision-constant 
+LDFLAGS = -O2 -Wl,--gc-sections,--relax,--defsym=__rtc_localtime=$(TS) \
+          -T$(COREINC)/$(MCU_LD) -lstdc++  -mthumb -mcpu=$(CPUARCH) \
+		  -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fsingle-precision-constant 
 
 LIBS = -larm_cortexM4l_math -lm
 
 export CPPFLAGS CXXFLAGS CFLAGS ASFLAGS LDFLAGS LIBS MCU_LD
 # ===================================================================
 
-
-# automatically create lists of the sources and objects
-# TODO: this does not handle Arduino libraries yet...
-# C_FILES := $(wildcard *.c)
-# CPP_FILES := $(wildcard *.cpp)
-# OBJS := $(C_FILES:.c=.o) $(CPP_FILES:.cpp=.o)
-
-# C_FILES := $(wildcard $(COREPATH)/*.c)
-# CPP_FILES := $(wildcard $(COREPATH)/*.cpp)
-# OBJS := $(C_FILES:.c=.o) $(CPP_FILES:.cpp=.o)
-
 # .SECONDARY do not delete intermediate files
 # This allow us to look at a disassembly (disasm) of the elf file
 .SECONDARY:
 
-# this invocation of make will be run serially
+# this invocation of make will be run serially, not sure why it is here
 # .NOTPARALLEL:
 
-# lets not get target confused with file names
+# let us not get target confused with file names
 .PHONY: all core cleancore keyboard upload disasm
 
 all: $(TARGET).hex
@@ -129,14 +121,11 @@ keyboard:
 	$(CC) $(LDFLAGS) -o "$@" "$<" -L$(CORELIB) $(LIBS)
 
 upload: $(TARGET).hex
-	$(abspath $(TOOLSPATH))/teensy_post_compile -file=$(TARGET) -path=$(shell pwd) -tools=$(abspath $(TOOLSPATH))
-	-$(abspath $(TOOLSPATH))/teensy_reboot
+	$(POSTCOMPILE) -file=$(TARGET) -path=$(shell pwd) -tools=$(TOOLSPATH)
+	-$(REBOOT)
 
 disasm: 
 	$(OBJDUMP) -d $(TARGET).elf
-
-# compiler generated dependency info
-# -include $(OBJS:.o=.d)
 
 clean:
 	rm -f *.o *.d $(TARGET).elf $(TARGET).hex
@@ -145,3 +134,8 @@ clean:
 # MAKEFILE NOTES
 # $@  -- the file named on the left side of the :
 # $<  -- the first item in the dependencies list
+#
+# Hyphen prior to commands in makefiles is used to suppress errors and continue
+#
+# compiler generated dependency info
+# -include $(OBJS:.o=.d)

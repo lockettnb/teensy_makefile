@@ -7,26 +7,35 @@ that comes with the Teensyduino install.
 Just navigate to the ".../hardware/teensy/avr/cores/teensy3" directory,
 create a main.cpp file and the Makefile will compile it.
 
-Cool, but I prefer to keep my software project in the $HOME/src directory.
-This took me on a long winding road of trying to better understand the
+Cool, but I prefer to keep my software projects in my $HOME/src directory.
+This took me on the long winding road of trying to better understand the
 Teensy makefile so I could customize it. 
 
-As the saying goes "YOU ARE IN A MAZE OF TWISTING LITTLE  
-PASSAGES, ALL DIFFERENT"
+Let the adventure begin....  
+"YOU ARE IN A MAZE OF TWISTING LITTLE PASSAGES"
 
 My goal is to have a project directory with the following structure:
 
 ~~~~
-     ~/src/proj/files.c              <--- project source code
-               /Makefile             <--- project make file
-               /teensy3/core_source  <--- teensy core software 
-               /teensy3/Makefile     <--- core makefile
+     ~/src/proj/main.c                 <--- project source code
+               /Makefile               <--- project make file
+               /teensy3/Makefile.core  <--- core makefile
+               /teensy3/*.S,c,cpp,h    <--- teensy core software 
+               /teensy3/build/*.o      <--- teensy build directory
+               /lib/core.a             <--- compiled teensy library
+               /include/*.h            <--- teensy include files
 ~~~~
 
-The project Makefile will recursively call the Teensy3 Makefile if
-any of the compile options change meaning we need to rebuild the core.
+The project Makefile will recursively call the Makefile.core if
+any of the compile options change and we need to rebuild the core library.
 So far I have only need this to switch from using the USB Serial Port 
 to USB Keyboard.
+
+The makefile.core build process will compile the Teensy source into the build
+directory.  The Teensy object files are archived into core.a in the lib
+directory.  The Teensy header files are copied into the include directory.
+
+Before we get to this solution we have a long twisty road ahead.
 
 
 Arduino/Teensyduino Install
@@ -35,6 +44,7 @@ There are a number of ways you can install and configure the
 Arduino and Teenduino software.  My approach is to install the Arduino
 software in $HOME/opt and then install Teensyduino on top of that directory.
 
+~~~~
     ---> download Arduino software, currently version 1.8.8
     $ tar -xf arduino-1.8.8-linux64.tar.xz
     $ cp -R arduino-1.8.8 ~/opt
@@ -43,21 +53,28 @@ software in $HOME/opt and then install Teensyduino on top of that directory.
     $ chmod 755 TeensyduinoInstall.linux64_1.4.5
     $ ./TeensyduinoInstall.linux64_1.4.5
     ---> navigate to $HOME/opt/arduino-1.8.8 and install
+~~~~
 
 I start by making a copy of the teensy3 code into my local project directory.
-That way if I delete an old arduino version I have the teensy software version
-I used stored directly with the project. 
+I like to keep a local copy with the project in case I delete an old arduino
+version. 
 
 ~~~~
     $ cp -R ~/opt/arduino-1.8.8/hardware/teensy/avr/cores/teensy3 \
-                ~/src/myproject/teensy3_1.8.8
+                ~/src/myproject/teensy3
 ~~~~
 
 Core Makefile Changes
 ---------------------
+I initally started by making a few changes to the Teensy Makefile.
+This would work well if I was just going to keep my programs mixed
+in with the Teensy core software.  Seems kind of messy to me.
+
+However, here was my first pass through the Makefile to make it
+Teensy 1.45 compatable.
 
 ~~~~
-    $ cd teensy3_1.8.8
+    $ cd teensy3
     $ cp Makefile Makefile.1    <--- always nice to make a backup
     $ vi Makefile
 
@@ -114,16 +131,16 @@ Core Makefile Changes
 
 You should be able to try this out by typing "make".  It will compile 
 a little cpp program (main.cpp) that is conveniently provided.
-Notice the "-DUSING_MAKEFILE" option.  The cpp program using this if 
-see if you are using a makefile.
+Notice the "-DUSING_MAKEFILE" option.  The cpp program can use this
+to conditionally compile for the IDE or standalone environments.
 
 
 
 Project Makefile
 ----------------
-This is where life got a little confusing.  I turned on verbose output with the 
-Arduino IDE and compared that to the Teenyduino Makefile.  There were lot of
-different flags used during the compile.  Time to investigate.
+I turned on verbose output with the Arduino IDE and compared that to the
+Teenyduino Makefile.  This is where life got a little confusing. There are a
+lot of different flags used during the compile.  Time to investigate.
 
 In the ~/opt/arduino-1.8.8/hardware/teensy/avr directory the boards.txt has
 options for the build process listed.
@@ -160,7 +177,12 @@ teensy35.build.flags.libs=-larm_cortexM4lf_math -lm
 This look promising. The verbose output from the Arduino IDE also provides some
 clues to the flags and options we need to compile code.
 
-Using "Arduino IDE --> File --> Prefenences --> Show verbose output during: +Compilation +Upload" 
+BTW: To turn on verbose:  
+
+~~~~
+Arduino IDE --> File --> Prefenences  
+    --> Show verbose output during: +Compilation +Upload  
+~~~~
 
 All of the flag/options are in the verbose output and a few extra options that
 can be set via the Arduino menus. (arduino version, speed, usb type, keyboard).
@@ -185,7 +207,6 @@ CPP Program Flags :: -c -O2 -g -Wall -ffunction-sections -fdata-sections
 -DARDUINO=10808 -DF_CPU=120000000 -DUSB_SERIAL -DLAYOUT_US_ENGLISH
 -I/tmp/arduino_build_259100/pch
 -I/home/john/opt/arduino-1.8.8/hardware/teensy/avr/cores/teensy3
-
 
 Linking Flags ::
 -O2 -Wl,--gc-sections,--relax,--defsym=__rtc_localtime=1552744299
@@ -246,41 +267,55 @@ CPUARCH = cortex-m4
 OPTIONS = -DF_CPU=120000000 -D$(USBFLAG) -DLAYOUT_US_ENGLISH 
 # options needed by many Arduino libraries to configure for Teensy 3.x
 OPTIONS += -D__$(MCU)__  -DTEENSYDUINO=145 -DARDUINO=10808
-# available for programs to ifdef makefile vs Arduino IDE code options 
+# This can be used in cpp/c programs to conditionally compile for ino
+# or regular cpp/c programs
 OPTIONs += -DUSING_MAKEFILE 
 
-# common flags & options
-CPPFLAGS = -c -O2 -g -Wall -ffunction-sections -fdata-sections -nostdlib -MMD
--mthumb -mcpu=$(CPUARCH) -mfloat-abi=hard -mfpu=fpv4-sp-d16
--fsingle-precision-constant $(OPTIONS)
-# C++ flags
+# CPP CXX C & AS flags plus options
+CPPFLAGS = -c -O2 -g -Wall -ffunction-sections -fdata-sections -nostdlib \
+		 -MMD -mthumb -mcpu=$(CPUARCH) -mfloat-abi=hard -mfpu=fpv4-sp-d16 \
+		 -fsingle-precision-constant $(OPTIONS)
 CXXFLAGS = -fno-exceptions -felide-constructors -std=gnu++14 -fno-rtti
-# C flags
 CFLAGS =
-# assembler flags
 ASFLAGS = -x assembler-with-cpp
 
 # linker options
 TS = $(shell date +%s)
-LDFLAGS = -O2 -Wl,--gc-sections,--relax,--defsym=__rtc_localtime=$(TS)
--T$(INC)/$(MCU_LD) -lstdc++  -mthumb -mcpu=$(CPUARCH) -mfloat-abi=hard
--mfpu=fpv4-sp-d16 -fsingle-precision-constant 
+LDFLAGS = -O2 -Wl,--gc-sections,--relax,--defsym=__rtc_localtime=$(TS) \
+          -T$(COREINC)/$(MCU_LD) -lstdc++  -mthumb -mcpu=$(CPUARCH) \
+		  -mfloat-abi=hard -mfpu=fpv4-sp-d16 -fsingle-precision-constant 
 
-# libraries to link... my version of the library
-# since the teensy is compiled to indivdual object we do not have a arduino lib
 LIBS = -larm_cortexM4l_math -lm
+
+export CPPFLAGS CXXFLAGS CFLAGS ASFLAGS LDFLAGS LIBS MCU_LD
 ~~~~
 
+Notice how these variables are exported so they are available when the project
+makefile calls the Teensy core makefile.  The project makefile has a target
+that will call the Teensy core makefile, first to delete the existing core
+libray then rebuild it.
+
+~~~~
+core:
+	cd $(COREPATH) &&  make -f Makefile.core clean
+	cd $(COREPATH) &&  make -f Makefile.core
+
+~~~~
 
 \pagebreak
 
 Review of the Flags 
 ====================
+While reviewing all the flags and options in the Arduino IDE build process and
+the Teensyduino makefile I collected information on each of them.
+
+Bit of a dry read, but quite enlighten.
+
 
 Common Flags (CPPFLAGS)
 -----------------------
 
--Wall..
+-Wall  
 enables all compilers warning messages
 
 -c  

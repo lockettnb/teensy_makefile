@@ -1,0 +1,59 @@
+# 
+# Teensy Core makefile
+#
+# 2019/03/17 this is now called from project makefile with all
+#             the Path and Build variables set
+#
+# 2018/03/07 notes
+#   changed ARDUINOPATH to 1.8.5 directory
+#   changed flags to 1.8.5
+#   changed arvhive tool name to gcc-ar
+#   changed path variables a bit
+#   combined copy include files with build of lib
+#
+
+# automatically create lists of the sources and objects
+ASM_FILES := $(wildcard *.S)
+C_FILES := $(wildcard *.c)
+CPP_FILES := $(wildcard *.cpp)
+INC_FILES := $(wildcard *.h)
+
+SOURCES := $(C_FILES:.c=.o) $(CPP_FILES:.cpp=.o) $(ASM_FILES:.S=.o)
+OBJS := $(foreach src,$(SOURCES), $(BUILDPATH)/$(src))
+
+.PHONY: all build clean
+
+all: build
+
+build: $(OBJS) $(INC_FILES) 
+	@echo  "\n>>>BUILDING CORE LIBRARY"
+	mkdir -p "$(CORELIB)"
+	$(AR) rcs $(CORELIB)/core.a $(OBJS)	
+	@echo  "\n>>>COPYING INCLUDE FILES"
+	mkdir -p "$(COREINC)"
+	cp $(INC_FILES) $(COREINC)
+	cp -R avr/ util/ $(COREINC)
+	cp $(MCU_LD) $(COREINC)
+
+
+$(BUILDPATH)/%.o: %.S
+	@echo "[S]\t$<"
+	mkdir -p "$(dir $@)"
+	$(CC) $(CPPFLAGS) $(ASMFLAGS) -I$(COREPATH)  -o "$@" -c "$<"
+
+$(BUILDPATH)/%.o: %.c
+	@echo "[C]\t$<"
+	mkdir -p "$(dir $@)"
+	$(CC) $(CPPFLAGS) $(CFLAGS) -I$(COREPATH) -o "$@" -c "$<"
+
+$(BUILDPATH)/%.o: %.cpp
+	@echo "[C++]\t$<"
+	mkdir -p "$(dir $@)"
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(COREPATH) -o "$@" -c "$<"
+
+clean:
+	@echo Cleaning...
+	rm -rf $(BUILDPATH)
+	rm -rf $(COREINC)
+	rm -rf $(CORELIB)
+
