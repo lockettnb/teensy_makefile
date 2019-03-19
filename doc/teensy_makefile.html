@@ -128,19 +128,22 @@ teensy35.build.flags.libs=-larm_cortexM4lf_math -lm</code></pre>
 <pre><code>Arduino IDE --&gt; File --&gt; Prefenences  
     --&gt; Show verbose output during: +Compilation +Upload  </code></pre>
 <p>All of the flag/options are in the verbose output and a few extra options that can be set via the Arduino menus. (arduino version, speed, usb type, keyboard).</p>
-<pre><code>Assembler Flags:: -c -O2 -g -Wall -ffunction-sections -fdata-sections -nostdlib
+<pre><code>Assembler Flags:  
+-c -O2 -g -Wall -ffunction-sections -fdata-sections -nostdlib
 -MMD -x assembler-with-cpp -mthumb -mcpu=cortex-m4 -mfloat-abi=hard
 -mfpu=fpv4-sp-d16 -fsingle-precision-constant -D__MK64FX512__ -DTEENSYDUINO=145
 -DARDUINO=10808 -DF_CPU=120000000 -DUSB_SERIAL -DLAYOUT_US_ENGLISH
 -I/home/john/opt/arduino-1.8.8/hardware/teensy/avr/cores/teensy3
 
-C Program Flags:: -c -O2 -g -Wall -ffunction-sections -fdata-sections -nostdlib
+C Program Flags:  
+-c -O2 -g -Wall -ffunction-sections -fdata-sections -nostdlib
 -MMD -mthumb -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16
 -fsingle-precision-constant -D__MK64FX512__ -DTEENSYDUINO=145 -DARDUINO=10808
 -DF_CPU=120000000 -DUSB_SERIAL -DLAYOUT_US_ENGLISH
 -I/home/john/opt/arduino-1.8.8/hardware/teensy/avr/cores/teensy3 
 
-CPP Program Flags :: -c -O2 -g -Wall -ffunction-sections -fdata-sections
+CPP Program Flags:  
+-c -O2 -g -Wall -ffunction-sections -fdata-sections
 -nostdlib -MMD -fno-exceptions -felide-constructors -std=gnu++14
 -Wno-error=narrowing -fno-rtti -mthumb -mcpu=cortex-m4 -mfloat-abi=hard
 -mfpu=fpv4-sp-d16 -fsingle-precision-constant -D__MK64FX512__ -DTEENSYDUINO=145
@@ -148,13 +151,13 @@ CPP Program Flags :: -c -O2 -g -Wall -ffunction-sections -fdata-sections
 -I/tmp/arduino_build_259100/pch
 -I/home/john/opt/arduino-1.8.8/hardware/teensy/avr/cores/teensy3
 
-Linking Flags ::
+Linking Flags:  
 -O2 -Wl,--gc-sections,--relax,--defsym=__rtc_localtime=1552744299
 -T/home/john/opt/arduino-1.8.8/hardware/teensy/avr/cores/teensy3/mk64fx512.ld
 -lstdc++ -mthumb -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16
 -fsingle-precision-constant 
 
-Linking Libs ::-L/tmp/arduino_build_259100 -larm_cortexM4lf_math -lm</code></pre>
+Linking Libs -L/tmp/arduino_build_259100 -larm_cortexM4lf_math -lm</code></pre>
 <p>The Teensyduio Makefile has a few less flags and options:</p>
 <pre><code># CPPFLAGS = compiler options for C and C++
 CPPFLAGS = -Wall -g -Os -mcpu=$(CPUARCH) -mthumb -MMD $(OPTIONS) -I.
@@ -260,6 +263,15 @@ export CPPFLAGS CXXFLAGS CFLAGS ASFLAGS LDFLAGS LIBS MCU_LD</code></pre>
 <p>-T script<br />Use script as the linker script. This option is supported by most systems using the GNU linker. On some targets, such as bare-board targets without an operating system, the -T option may be required when linking to avoid references to undefined symbols.</p>
 <p>-lstdc++<br />The flag -l<library> simply specifies that the library <library> should be searched when linking. Since we are using arm-none-eabi-gcc, I assume this will use the stdc++ lib in the ~/opt/arduino-1.8.8/hardware/tools/arm/arm-none-eabi/lib directory.</p>
 <p>-mthumb<br />-mcpu=$(CPUARCH)<br />-mfloat-abi=hard<br />-mfpu=fpv4-sp-d16<br />-fsingle-precision-constant<br />See the common (CPPFLAGS) flags for description.</p>
+<p>-l<br />links with a library file.i Link -l with library name without the lib prefix and the .a or .so extensions. For static library file libmath.a use -lmath</p>
+<p>-L<br />With access to library headers, gcc can compile object code (.o files created when using the -c command-line option) without needing access to the library routines themselves.</p>
+<p>An executable will need the library routines though. These are either included with the executable (statically linking the librarys .a files into the binary) or accessed from a .so &quot;shared object&quot; file.</p>
+<p>An executable is created with a linker (usually /usr/bin/ld), but the linker is usually called for us by gcc. We tell gcc where the .a or .so files are by using: -L/path/to/library/code We also have to tell it which libraries to link with, either by explicitly linking in the .a file or specifying a library by name, for example: -lfftw3 to link with libfftw3.</p>
+<h2 id="objdump-flags">objdump Flags</h2>
+<p>-d<br />--disassemble<br />Display the assembler mnemonics for the machine instructions from objfile. This option only disassembles those sections which are expected to contain instructions.</p>
+<p>-S<br />--source<br />Display source code intermixed with disassembly, if possible. Implies -d.</p>
+<p>-C<br />--demangle[=style]<br />Decode (demangle) low-level symbol names into user-level names. Besides removing any initial underscore prepended by the system, this makes C ++ function names readable. Different compilers have different mangling styles. The optional demangling style argument can be used to choose an appropriate demangling style for your compiler.</p>
+<p>-t<br />--syms<br />Print the symbol table entries of the file. This is similar to the information provided by the nm program, although the display format is different</p>
 <p></p>
 <h2 id="first-upload">First Upload</h2>
 <p>Notes from pjrc.com on using your teensy for the first time.</p>

@@ -188,19 +188,22 @@ All of the flag/options are in the verbose output and a few extra options that
 can be set via the Arduino menus. (arduino version, speed, usb type, keyboard).
 
 ~~~~
-Assembler Flags:: -c -O2 -g -Wall -ffunction-sections -fdata-sections -nostdlib
+Assembler Flags:  
+-c -O2 -g -Wall -ffunction-sections -fdata-sections -nostdlib
 -MMD -x assembler-with-cpp -mthumb -mcpu=cortex-m4 -mfloat-abi=hard
 -mfpu=fpv4-sp-d16 -fsingle-precision-constant -D__MK64FX512__ -DTEENSYDUINO=145
 -DARDUINO=10808 -DF_CPU=120000000 -DUSB_SERIAL -DLAYOUT_US_ENGLISH
 -I/home/john/opt/arduino-1.8.8/hardware/teensy/avr/cores/teensy3
 
-C Program Flags:: -c -O2 -g -Wall -ffunction-sections -fdata-sections -nostdlib
+C Program Flags:  
+-c -O2 -g -Wall -ffunction-sections -fdata-sections -nostdlib
 -MMD -mthumb -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16
 -fsingle-precision-constant -D__MK64FX512__ -DTEENSYDUINO=145 -DARDUINO=10808
 -DF_CPU=120000000 -DUSB_SERIAL -DLAYOUT_US_ENGLISH
 -I/home/john/opt/arduino-1.8.8/hardware/teensy/avr/cores/teensy3 
 
-CPP Program Flags :: -c -O2 -g -Wall -ffunction-sections -fdata-sections
+CPP Program Flags:  
+-c -O2 -g -Wall -ffunction-sections -fdata-sections
 -nostdlib -MMD -fno-exceptions -felide-constructors -std=gnu++14
 -Wno-error=narrowing -fno-rtti -mthumb -mcpu=cortex-m4 -mfloat-abi=hard
 -mfpu=fpv4-sp-d16 -fsingle-precision-constant -D__MK64FX512__ -DTEENSYDUINO=145
@@ -208,13 +211,13 @@ CPP Program Flags :: -c -O2 -g -Wall -ffunction-sections -fdata-sections
 -I/tmp/arduino_build_259100/pch
 -I/home/john/opt/arduino-1.8.8/hardware/teensy/avr/cores/teensy3
 
-Linking Flags ::
+Linking Flags:  
 -O2 -Wl,--gc-sections,--relax,--defsym=__rtc_localtime=1552744299
 -T/home/john/opt/arduino-1.8.8/hardware/teensy/avr/cores/teensy3/mk64fx512.ld
 -lstdc++ -mthumb -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16
 -fsingle-precision-constant 
 
-Linking Libs ::-L/tmp/arduino_build_259100 -larm_cortexM4lf_math -lm
+Linking Libs -L/tmp/arduino_build_259100 -larm_cortexM4lf_math -lm
 ~~~~
 
 The Teensyduio Makefile has a few less flags and options:
@@ -509,6 +512,49 @@ use the stdc++ lib in the
 -mfpu=fpv4-sp-d16  
 -fsingle-precision-constant  
 See the common (CPPFLAGS) flags for description.
+
+-l  
+link with a library file.  
+The library name is without the lib prefix and the .a or .so extensions.  
+For example, for static library libmath.a use -lmath
+
+-L  
+An executable is created with a linker (usually /usr/bin/ld), but the
+linker is usually called for us by gcc. We tell gcc where the .a or .so
+files are by using:  
+    -L/path/to/library/code  
+
+We also have to tell it which libraries to link with, either by
+explicitly linking in the .a file or specifying a library by name with
+the "-l" option.
+
+The core.a library is explicitly specified on the command line.
+
+
+objdump Flags
+-------------
+-d  
+--disassemble  
+Display the assembler mnemonics for the machine instructions from objfile. This
+option only disassembles those sections which are expected to contain
+instructions. 
+
+-S  
+--source  
+Display source code intermixed with disassembly, if possible. Implies -d.
+
+-C  
+--demangle[=style]  
+Decode (demangle) low-level symbol names into user-level names. Besides
+removing any initial underscore prepended by the system, this makes C ++
+function names readable. Different compilers have different mangling styles.
+The optional demangling style argument can be used to choose an appropriate
+demangling style for your compiler. 
+
+-t  
+--syms  
+Print the symbol table entries of the file. This is similar to the information
+provided by the nm program, although the display format is different
 
 \pagebreak
 
