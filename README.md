@@ -12,19 +12,18 @@ Teensy makefile so I could customize it.
 As the saying goes:
  "YOU ARE IN A MAZE OF TWISTING LITTLE PASSAGES, ALL DIFFERENT"
 
-This repository has a modified version of the makefile for the core
-teensy software. And a project makefile that will call the core 
-makefile if a recompile is needed. Usually this is done if you 
-change a compile time configuration option.   
+This repository has a project Makefile to compile
+project code and recursively call a core makefile (Makefile.core) 
+to recompile and build the Teensy core library.
+
 
 BONUS: As part of this adventure through the twisty little passages I 
 collected documentation on all of the GCC compiler/linker options. See
 the doc/teensy_makefile.pdf for details.
 
-BONUS BONUS: There is also a documentation makefile. This make is used to convert 
-markdown documentation into HTML or PDF.
+BONUS BONUS: There is also a documentation makefile. This make is used to
+convert markdown documentation into HTML or PDF.
 
-NOTE: The makefiles are specific to the versions of the Arduino and 
-Teensyduino software.  In this case they are for
-Arduino 1.8.8 and Teensyduino 1.45.  They can be easily (easy is a relative word)
-changed for other versions.
+NOTE: The makefiles are specific to the versions of the Arduino and Teensyduino
+software.  In this case they are for Arduino 1.8.8 and Teensyduino 1.45.  They
+can be easily (easy is a relative word) changed for other versions.
