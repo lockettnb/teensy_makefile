@@ -3,7 +3,7 @@
 
 # The name of your project (used to name the compiled .hex file)
 # TARGET = $(nodir $CURDIR)
-TARGET = main
+TARGET = tn6502
 
 COREMAKE = Makefile.core
 

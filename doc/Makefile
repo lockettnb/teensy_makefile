@@ -11,7 +11,7 @@
 # make viewpdf		-- lauch pdf reader
 # make viewhtml		-- launch firefox 
 
-DOC=teensy_makefile
+DOC=osi_computer
 DOCTYPE=markdown
 
 PAN=pandoc
